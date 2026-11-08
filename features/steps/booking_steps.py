@@ -71,3 +71,23 @@ def step_reference(context):
     booking = context.result.booking
     assert booking is not None, "No booking was returned"
     assert booking.reference.startswith("CT-"), f"Unexpected reference: {booking.reference}"
+
+
+# ---- AC2: rejection steps ---------------------------------------------------
+
+@then("the booking is rejected")
+def step_rejected(context):
+    assert not context.result.success, "Expected the booking to be rejected"
+    assert context.result.booking is None, "A rejected request must not return a booking"
+
+
+@then('the resident is told "{message}"')
+def step_told(context, message):
+    assert message in context.result.errors, (
+        f"Expected message {message!r}, got {context.result.errors!r}"
+    )
+
+
+@then("no booking is stored")
+def step_nothing_stored(context):
+    assert context.service.stored_count() == 0, "A rejected request must not be stored"
