@@ -29,3 +29,12 @@ Feature: Book a council tax appointment
       | BR2  | SW1A 1AA | 09-11-2026 | 10:00 | Appointments must be booked for a future date.  |
       | BR1  | SW1A 1AA | 14-11-2026 | 10:00 | Appointments are only available on weekdays.    |
       | BR1  | SW1A 1AA | 10-11-2026 | 08:00 | Appointments are available from 09:00 to 16:30. |
+
+  @AC3 @alternative-flow
+  Scenario: Double booking is prevented
+    Given the resident "Sam Taylor" with postcode "SW1A 1AA"
+    And the slot "10-11-2026" at "10:00" is already booked by "Jordan Lee"
+    When the resident books a "council tax" appointment on "10-11-2026" at "10:00"
+    Then the booking is rejected
+    And the resident is told "That slot is already booked. Please choose another time."
+    And the original booking is unchanged
