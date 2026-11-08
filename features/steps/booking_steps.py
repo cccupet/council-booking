@@ -12,7 +12,7 @@ from src.service import BookingService, InMemoryBookingRepository
 
 
 def to_date(text):
-    return datetime.strptime(text, "%Y-%m-%d").date()
+    return datetime.strptime(text, "%d-%m-%Y").date()
 
 
 def to_time(text):
