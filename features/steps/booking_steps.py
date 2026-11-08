@@ -91,3 +91,28 @@ def step_told(context, message):
 @then("no booking is stored")
 def step_nothing_stored(context):
     assert context.service.stored_count() == 0, "A rejected request must not be stored"
+
+
+# ---- AC3: double-booking steps ----------------------------------------------
+
+@given('the slot "{day}" at "{slot}" is already booked by "{name}"')
+def step_slot_already_booked(context, day, slot, name):
+    """Arrange: put an existing booking in the system before the test action."""
+    existing = BookingRequest(
+        name=name,
+        postcode="M1 1AE",
+        enquiry_type=EnquiryType.COUNCIL_TAX,
+        day=to_date(day),
+        slot=to_time(slot),
+    )
+    result = context.service.book(existing)
+    assert result.success, f"Test setup failed: {result.errors!r}"
+    context.original_booking = result.booking
+
+
+@then("the original booking is unchanged")
+def step_original_unchanged(context):
+    stored = context.service.stored_bookings()
+    assert stored == (context.original_booking,), (
+        f"Expected only the original booking, found {stored!r}"
+    )
