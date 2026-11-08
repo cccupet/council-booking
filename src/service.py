@@ -7,6 +7,8 @@ Design notes
 * Persistence sits behind a small repository class, so the in-memory
   store can later be swapped for a database without touching the
   business rules.
+* Validation runs before anything is stored, so a rejected request leaves
+  no trace (AC2).
 """
 from __future__ import annotations
 
@@ -14,6 +16,7 @@ from datetime import date
 from typing import Callable, List
 
 from src.booking import Booking, BookingRequest, BookingResult, SlotPolicy
+from src.validation import validate_request
 
 
 class InMemoryBookingRepository:
@@ -45,6 +48,13 @@ class BookingService:
         self._clock = clock
 
     def book(self, request: BookingRequest) -> BookingResult:
+        errors = validate_request(request, self._policy, self._clock())
+        if errors:
+            return BookingResult(
+                success=False,
+                message="Booking rejected. Please correct the details and try again.",
+                errors=errors,
+            )
         reference = self._next_reference()
         booking = Booking(reference=reference, request=request)
         self._repository.add(booking)
@@ -53,6 +63,10 @@ class BookingService:
             message=f"Appointment confirmed. Your reference is {reference}.",
             booking=booking,
         )
+
+    def stored_count(self) -> int:
+        """Number of bookings held; used to prove rejected requests are not stored."""
+        return self._repository.count()
 
     def _next_reference(self) -> str:
         return f"{self.REFERENCE_PREFIX}-{self._repository.count() + 1:04d}"
